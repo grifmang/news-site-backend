@@ -12,17 +12,19 @@ const router = express.Router();
 
 app.use(cors());
 router.use(bodyParser.json());
-router.use(bodyParser.urlencoded({ extended: false }));
+router.use(bodyParser.urlencoded({ extended: true }));
+
 
 //to avoid cross origin requests errors
 app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, SECRET_KEY');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, process.env.SECRET_KEY');
+    res.header('Access-Control-Allow-Methods', 'POST, GET, PATCH, DELETE, OPTIONS');
     next();
   });
 
 const findUserByEmail = (email) => {
+    console.log(`findUserByEmail email: ${email}`);
     return database('users').where({email}).first();
 }
 
@@ -31,8 +33,66 @@ const findUserById = (id) => {
 }
 
 const createUser = (user) => {
-    return database("users").insert(user)
+    return database("users").insert(user);
 }
+
+const getUserSites = async (email) => {
+    console.log(email);
+    try {
+        const res = await findUserByEmail(email);
+        console.log(res);
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
+
+const addSites = (sites, email) => {
+    findUserByEmail(email).then(res => {
+        // const oldSites = database('users').where('sites');
+        const oldSites = res.sites;
+        console.log(oldSites)
+        let splitOld = oldSites.split(',');
+        console.log(splitOld);
+        sites.map((element) => {
+            splitOld.push(element);
+        })
+        return database('users').where('sites').insert(splitOld);
+    })
+}
+
+router.get('/', (req, res) => {
+    // console.log(req);
+    // const printReq = () => {
+    //     let count = 0;
+    //     for(var property in req) {
+    //         console.log(`#${count} property: ${property}`);
+    //         count += 1;
+    //     } 
+    // }
+    // printReq();
+    // console.log(res);
+    console.log(req.body);
+    getUserSites(req.body.email)
+    .then(promResponse => {
+        if (!promResponse) {
+            return res.status(500).json({ message: 'DB Error.' });
+        }
+        //Edit to return sites for side menu
+        return res.status(201).json({ sites:  promResponse});
+    })
+})
+
+router.post('/profile', (req, res) => {
+    // return {message: 'This route works.'};
+    const sites = req.body.sites;
+    const email = req.body.email;
+
+    addSites(sites, email)
+    .then(response => {
+        return res.status(201).json({message: response});
+    })
+})
 
 router.post('/register',  (req, res) => {
 
@@ -68,9 +128,9 @@ router.post('/login',  (req, res) => {
     });
 });
 
-router.get('/',  (req, res) => {
-    res.status(200).send('This is an authentication server');
-});
+// router.get('/',  (req, res) => {
+//     res.status(200).send('This is an authentication server');
+// });
 
 app.use(router);
 const port =  process.env.PORT  ||  3000;
