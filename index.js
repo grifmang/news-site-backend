@@ -24,7 +24,6 @@ app.use(function (req, res, next) {
   });
 
 const findUserByEmail = (email) => {
-    console.log(`findUserByEmail email: ${email}`);
     return database('users').where({email}).first();
 }
 
@@ -37,10 +36,10 @@ const createUser = (user) => {
 }
 
 const getUserSites = async (email) => {
-    console.log(email);
     try {
         const res = await findUserByEmail(email);
-        console.log(res);
+        // console.log(res.sites);
+        return res.sites
     }
     catch (err) {
         console.log(err);
@@ -48,38 +47,35 @@ const getUserSites = async (email) => {
 }
 
 const addSites = (sites, email) => {
-    findUserByEmail(email).then(res => {
-        // const oldSites = database('users').where('sites');
-        const oldSites = res.sites;
-        console.log(oldSites)
-        let splitOld = oldSites.split(',');
-        console.log(splitOld);
-        sites.map((element) => {
-            splitOld.push(element);
+    
+    getUserSites(email).then(res => {
+        const oldSites = res;
+        const splitOld = oldSites.split(',');
+        let preSplit = [];
+        splitOld.map((element) => {
+            preSplit.push(element.trim());
         })
-        return database('users').where('sites').insert(splitOld);
+        preSplit.push(sites);
+        let splitReturn = preSplit.join(',');
+        return database("users").where("sites", '=', email).update({sites: splitReturn});
     })
+    .catch(err => {console.log(err)})
 }
 
-router.get('/', (req, res) => {
-    // console.log(req);
-    // const printReq = () => {
-    //     let count = 0;
-    //     for(var property in req) {
-    //         console.log(`#${count} property: ${property}`);
-    //         count += 1;
-    //     } 
-    // }
-    // printReq();
-    // console.log(res);
-    console.log(req.body);
+router.post('/', (req, res) => {
+    // console.log(req.body);
     getUserSites(req.body.email)
     .then(promResponse => {
         if (!promResponse) {
             return res.status(500).json({ message: 'DB Error.' });
         }
         //Edit to return sites for side menu
-        return res.status(201).json({ sites:  promResponse});
+        let newSiteArray = promResponse.split(',');
+        let trimmedArr = []
+        newSiteArray.map(element => {
+            trimmedArr.push(element.trim());
+        })
+        return res.status(201).json({sites:  trimmedArr});
     })
 })
 
@@ -87,11 +83,12 @@ router.post('/profile', (req, res) => {
     // return {message: 'This route works.'};
     const sites = req.body.sites;
     const email = req.body.email;
-
+    // Promise error
     addSites(sites, email)
     .then(response => {
         return res.status(201).json({message: response});
     })
+    .catch(err => {console.log(err)})
 })
 
 router.post('/register',  (req, res) => {
@@ -128,9 +125,9 @@ router.post('/login',  (req, res) => {
     });
 });
 
-// router.get('/',  (req, res) => {
-//     res.status(200).send('This is an authentication server');
-// });
+router.get('/',  (req, res) => {
+    res.status(200).send('This is an authentication server');
+});
 
 app.use(router);
 const port =  process.env.PORT  ||  3000;
