@@ -128,6 +128,10 @@ router.get('/',  (req, res) => {
     res.status(200).send('This is an authentication server');
 });
 
+router.get('/login', (req, res) => {
+    res.status(200).send('Login route works.');
+})
+
 app.use(router);
 const port =  process.env.PORT  ||  3000;
 app.listen(port, () => {
