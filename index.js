@@ -1,4 +1,3 @@
-
 "use strict";
 require('dotenv').config();
 const express = require('express');
@@ -62,34 +61,34 @@ const addSites = (sites, email) => {
     .catch(err => {console.log(err)})
 }
 
-router.post('/', (req, res) => {
-    // console.log(req.body);
-    getUserSites(req.body.email)
-    .then(promResponse => {
-        if (!promResponse) {
-            return res.status(500).json({ message: 'DB Error.' });
-        }
-        //Edit to return sites for side menu
-        let newSiteArray = promResponse.split(',');
-        let trimmedArr = []
-        newSiteArray.map(element => {
-            trimmedArr.push(element.trim());
-        })
-        return res.status(201).json({sites:  trimmedArr});
-    })
-})
+// router.post('/', (req, res) => {
+//     // console.log(req.body);
+//     getUserSites(req.body.email)
+//     .then(promResponse => {
+//         if (!promResponse) {
+//             return res.status(500).json({ message: 'DB Error.' });
+//         }
+//         //Edit to return sites for side menu
+//         let newSiteArray = promResponse.split(',');
+//         let trimmedArr = []
+//         newSiteArray.map(element => {
+//             trimmedArr.push(element.trim());
+//         })
+//         return res.status(201).json({sites:  trimmedArr});
+//     })
+// })
 
-router.post('/profile', (req, res) => {
-    // return {message: 'This route works.'};
-    const sites = req.body.sites;
-    const email = req.body.email;
-    // Promise error
-    addSites(sites, email)
-    .then(response => {
-        return res.status(201).json({message: response});
-    })
-    .catch(err => {console.log(err)})
-})
+// router.post('/profile', (req, res) => {
+//     // return {message: 'This route works.'};
+//     const sites = req.body.sites;
+//     const email = req.body.email;
+//     // Promise error
+//     addSites(sites, email)
+//     .then(response => {
+//         return res.status(201).json({message: response});
+//     })
+//     .catch(err => {console.log(err)})
+// })
 
 router.post('/register',  (req, res) => {
 
